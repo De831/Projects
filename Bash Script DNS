@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Check if the domain name argument is provided
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <domain_name>"
+    exit 1
+fi
+
+# Extract domain name from the argument
+domain=$1
+ip_address="10.10.10.26"
+
+# Run the dig command and print the result
+result=$(dig $domain.scmtdnt @$ip_address +short)
+echo "Result for $domain: $result"
