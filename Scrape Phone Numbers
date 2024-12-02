@@ -1,0 +1,78 @@
+from selenium import webdriver
+from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from webdriver_manager.firefox import GeckoDriverManager
+from selenium.webdriver.firefox.options import Options
+import pandas as pd
+import time
+
+# Set up Firefox WebDriver using GeckoDriverManager
+driver = webdriver.Firefox(service=Service(GeckoDriverManager().install()))
+
+# Initialize Firefox with options
+options = Options()
+options.headless = True  # Keep headless mode, but you can set to False to see the browser
+options.set_preference("general.useragent.override", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+options.set_preference("dom.webdriver.enabled", False)  # Disable webdriver attribute to avoid detection
+
+# Path to the geckodriver executable
+driver = webdriver.Firefox(options=options)  # Use the options object here
+# Load your CSV data
+df = pd.read_csv('county_surplus_data.csv')
+
+# Define the county or ZIP code (example: Polk County, 12345)
+county_or_zip = "Polk County, FL"  # Or any other county and ZIP code
+
+# Function to perform a search on TruePeopleSearch and extract phone numbers
+def find_phone_number(owner_name):
+    try:
+        # Open the TruePeopleSearch page
+        driver.get('https://www.truepeoplesearch.com')
+
+        # Locate the input field for the name search
+        name_input = driver.find_element(By.NAME, "Name")
+
+        # Locate the input field for City, State, or Zip
+        location_input = driver.find_element(By.NAME, "CityStateZip")
+
+        # Clear the input fields
+        name_input.clear()
+        location_input.clear()
+
+        # Send the name and location (county or zip code)
+        name_input.send_keys(owner_name)
+        location_input.send_keys(county_or_zip)  # You can customize this field
+
+        # Submit the search (simulate pressing Enter)
+        location_input.send_keys(Keys.RETURN)
+
+        # Wait for the results to load (this might take some time)
+        time.sleep(3)  # You can adjust this time or use WebDriverWait
+
+        # Check if the page has any phone numbers listed in the results
+        # Example of extracting phone numbers, you may need to adjust the logic
+        try:
+            phone_elements = driver.find_elements(By.XPATH, "//a[contains(@href, 'tel:')]")
+            if phone_elements:
+                return phone_elements[0].text  # Get the first phone number found
+            else:
+                return None
+        except Exception as e:
+            print(f"Error extracting phone number: {e}")
+            return None
+
+    except Exception as e:
+        print(f"Error during search: {e}")
+        return None
+
+# Iterate over the 'Previous Owner of Record' column to extract phone numbers
+df['Phone Number'] = df['Previous Owner of Record'].apply(lambda name: find_phone_number(name.split('/')[0]))
+
+# Save the updated DataFrame with phone numbers to a new CSV
+df.to_csv('county_surplus_data_with_phone_numbers.csv', index=False)
+
+# Close the browser window
+driver.quit()
+
+print("Phone numbers have been added and CSV saved.")
