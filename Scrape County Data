@@ -1,0 +1,71 @@
+import time
+import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+# Setup Firefox options for headless mode
+options = Options()
+options.add_argument("--headless")  # Enable headless mode
+driver = webdriver.Firefox(options=options)
+
+# Navigate to the county surplus data page
+url = 'https://www.polkcountyclerk.net/280/Surplus-Funds-List'
+driver.get(url)
+
+# Wait for the table to load
+WebDriverWait(driver, 10).until(
+    EC.presence_of_element_located((By.TAG_NAME, "table"))
+)
+
+# Now locate the table element
+table = driver.find_element(By.TAG_NAME, "table")
+
+# Get headers from the website and rename them to match desired column headers
+headers = [header.text.strip() for header in table.find_elements(By.TAG_NAME, 'th')]
+
+# Manually set the desired column headers in the order you want
+desired_headers = [
+    'Sale Date',
+    'Tax Deed Number',
+    'Certificate Number',
+    'Amount Available',
+    'Previous Owner of Record',
+    'Property ID Number'
+]
+
+# Extract table rows (data)
+rows = table.find_elements(By.TAG_NAME, 'tr')
+
+# Initialize list to store row data
+data = []
+
+# Loop through each row and extract the data
+for row in rows[1:]:  # Skip the header row
+    columns = row.find_elements(By.TAG_NAME, 'td')
+    if len(columns) == 6:  # Ensure there are exactly 6 columns per row
+        row_data = [
+            columns[0].text.strip(),  # Sale Date
+            columns[1].text.strip(),  # Tax Deed Number
+            columns[2].text.strip(),  # Certificate Number
+            columns[3].text.strip(),  # Amount Available
+            columns[4].text.strip(),  # Previous Owner of Record
+            columns[5].text.strip()   # Property ID Number
+        ]
+        data.append(row_data)
+
+# Create DataFrame with the desired headers
+df = pd.DataFrame(data, columns=desired_headers)
+
+# Convert the 'Amount Available' column to string to prevent scientific notation
+df['Amount Available'] = df['Amount Available'].astype(str)
+
+# Save the DataFrame to CSV
+df.to_csv('county_surplus_data.csv', index=False)
+
+# Close the driver
+driver.quit()
+
+print("CSV file saved with the desired headers and data.")
