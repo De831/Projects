@@ -1,0 +1,4 @@
+SELECT * FROM (
+SELECT stock, warehouse, bin_no, active_flag, partloc, model_no, descr, brand, unit_name, detail_descr, vendor_id, leadtime, ven_cost, ord_qty, avg_cost, inv_type, min_qty, max_qty, tot_qty, rsv_qty, avl_qty,last_in, last_out, markup_cost, ven_unitname, ven_qtyperunit,cnt_date, cnt_qty, cnt_cost, price_low, price_high,prior_avg_cost, add_by, add_dt, upd_by, upd_dt
+FROM santacruz.dbo.inventory
+) z_q WHERE inv_type = N'I'
