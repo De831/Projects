@@ -2,3 +2,119 @@ SELECT * FROM (
 SELECT stock, warehouse, bin_no, active_flag, partloc, model_no, descr, brand, unit_name, detail_descr, vendor_id, leadtime, ven_cost, ord_qty, avg_cost, inv_type, min_qty, max_qty, tot_qty, rsv_qty, avl_qty,last_in, last_out, markup_cost, ven_unitname, ven_qtyperunit,cnt_date, cnt_qty, cnt_cost, price_low, price_high,prior_avg_cost, add_by, add_dt, upd_by, upd_dt
 FROM santacruz.dbo.inventory
 ) z_q WHERE inv_type = N'I'
+
+
+----------------------------------------
+SELECT
+    inv.stock,
+    inv.warehouse,
+    inv.bin_no,
+    inv.partloc,
+    inv.model_no,
+    inv.descr,
+    inv.brand,
+    inv.unit_name,
+    inv.detail_descr,
+    inv.vendor_id,
+    ven.vendor_name,  -- Vendor name from the vendors table
+    inv.leadtime,
+    inv.ven_cost,
+    inv.ord_qty,
+    inv.avg_cost,
+    inv.inv_type,
+    inv.min_qty,
+    inv.max_qty,
+    inv.tot_qty,
+    inv.rsv_qty,
+    inv.avl_qty,
+    inv.last_in,
+    inv.last_out,
+    inv.markup_cost,
+    inv.ven_unitname,
+    inv.ven_qtyperunit,
+    inv.cnt_date,
+    inv.cnt_qty,
+    inv.cnt_cost,
+    inv.price_low,
+    inv.price_high,
+    inv.prior_avg_cost,
+    inv.add_by,
+    inv.add_dt,
+    inv.upd_by,
+    inv.upd_dt,
+    -- Calculating total inventory value (quantity * cost)
+    (inv.tot_qty * inv.avg_cost) AS total_inventory_value
+FROM
+    santacruz.dbo.inventory AS inv
+-- Join with the vendors table to get vendor names
+LEFT JOIN
+    santacruz.dbo.vendors AS ven ON inv.vendor_id = ven.vendor_id
+WHERE
+    inv.inv_type = N'I' -- Filter for inventory type 'I'
+    AND inv.avl_qty > 0  -- Optional filter: Only include items with available quantity
+GROUP BY
+    inv.warehouse,
+    inv.brand,
+    inv.stock,
+    inv.bin_no,
+    inv.partloc,
+    inv.model_no,
+    inv.descr,
+    inv.unit_name,
+    inv.detail_descr,
+    inv.vendor_id,
+    ven.vendor_name,
+    inv.leadtime,
+    inv.ven_cost,
+    inv.ord_qty,
+    inv.avg_cost,
+    inv.inv_type,
+    inv.min_qty,
+    inv.max_qty,
+    inv.tot_qty,
+    inv.rsv_qty,
+    inv.avl_qty,
+    inv.last_in,
+    inv.last_out,
+    inv.markup_cost,
+    inv.ven_unitname,
+    inv.ven_qtyperunit,
+    inv.cnt_date,
+    inv.cnt_qty,
+    inv.cnt_cost,
+    inv.price_low,
+    inv.price_high,
+    inv.prior_avg_cost,
+    inv.add_by,
+    inv.add_dt,
+    inv.upd_by,
+    inv.upd_dt
+ORDER BY
+    inv.warehouse, inv.brand, inv.tot_qty DESC;  -- Sort by warehouse, brand, and total quantity descending
+
+--------------------------------------------------------------------------------------------------------------
+Key Features Explained:
+
+    Join with Vendors Table:
+        I added a LEFT JOIN to the vendors table to bring in the vendor_name. You can replace the vendors table and column names as appropriate based on your actual database schema.
+
+    Total Inventory Value Calculation:
+        The calculation (inv.tot_qty * inv.avg_cost) gives the total value of the inventory. This is helpful for financial analysis.
+
+    Group By Clause:
+        The GROUP BY clause ensures you group by the right fields. This is needed when using aggregate functions like SUM() or for ensuring distinct rows.
+
+    Filter for Available Quantity:
+        The AND inv.avl_qty > 0 condition filters out items with zero available quantities. This could be adjusted based on your needs.
+
+    Sorting:
+        The ORDER BY clause sorts the data by warehouse, brand, and tot_qty DESC, meaning the items with the highest total quantity will appear first.
+
+    Alias Usage:
+        inv and ven are used as table aliases to make the query easier to read and write.
+
+Further Enhancements:
+
+    Aggregates: If you want to summarize data (e.g., total inventory value per warehouse), you could use SUM() in the SELECT clause and group by the desired fields.
+    Additional Filters: You can add other filters like date ranges (cnt_date) or cost thresholds (avg_cost) to refine the query further.
+    Subqueries: If you need additional calculations or filtering that requires subqueries, those can be incorporated as well.
