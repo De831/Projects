@@ -1,0 +1,95 @@
+function onEdit(e) {
+  const sheet = e.source.getActiveSheet();
+  const editedRange = e.range;
+  const editedColumn = editedRange.getColumn();
+  const notificationColumn = 2; // Column B for Person (name or nickname).
+  const nameEmailRange = sheet.getRange("G2:H"); // Adjust range to where names/nicknames and emails are listed.
+
+  // Only proceed if the edit is in any of the relevant columns (A, B, C, D)
+  if ([1, 2, 3, 4].includes(editedColumn)) {
+    const row = editedRange.getRow();
+    const person = sheet.getRange(row, 2).getValue().trim(); // Trim spaces from Person (Column B)
+    const category = sheet.getRange(row, 1).getValue(); // Data in Category (Column A)
+    const description = sheet.getRange(row, 3).getValue(); // Data in Description (Column C)
+    const dueDate = sheet.getRange(row, 4).getValue(); // Data in Due Date (Column D)
+    const notes = sheet.getRange(row, 5).getValue(); // Data in Notes (Column E)
+
+    // Log values for debugging
+    Logger.log('Person: ' + person);
+    Logger.log('Category: ' + category);
+    Logger.log('Description: ' + description);
+    Logger.log('Due Date: ' + dueDate);
+    Logger.log('Notes: ' + notes);
+
+    // Check if the Person, Category, Description, and Due Date columns are filled
+    if (person && category && description && dueDate) {
+      let email = '';
+
+      // Check if the Person is "all" (case-insensitive) - send to all emails
+      if (person.toLowerCase() === 'all') {
+        email = [
+          'santacruzbusinessconsultants@gmail.com',
+          'estradatreeservice831@gmail.com',
+          'iestrada1993@gmail.com'
+        ];
+        Logger.log('Sending to (all): ' + email.join(', '));
+      } else {
+        const nameEmailMap = createNameEmailMap(nameEmailRange);
+        email = nameEmailMap[person];
+        Logger.log('Sending to (specific): ' + email);
+      }
+
+      // If email is found, send the notification
+      if (email && email.length > 0) {
+        email = Array.isArray(email) ? email.join(',') : email; // Join the email array into a comma-separated string if it's an array
+        const spreadsheetUrl = e.source.getUrl(); // Get the URL of the spreadsheet.
+        const sheetName = sheet.getName(); // Get the name of the sheet.
+
+        const message = `Hello, 
+
+You have been assigned a new task in the spreadsheet "${e.source.getName()}".
+
+Details:
+- Category: ${category}
+- Description: ${description}
+- Due Date: ${dueDate}
+- Notes: ${notes}
+
+You can access the spreadsheet here: ${spreadsheetUrl}#gid=${sheet.getSheetId()}
+
+Best regards,
+Google Sheets Notification`;
+
+        const subject = "Notification: You Have Been Assigned a Task";
+        
+        // Use the correct signature: GmailApp.sendEmail(recipient, subject, body)
+        GmailApp.sendEmail(email, subject, message);
+
+        Logger.log('Email sent successfully.');
+      } else {
+        Logger.log('No email sent. Invalid or missing email.');
+      }
+    } else {
+      Logger.log('Required columns are not filled.');
+    }
+  }
+}
+
+function createNameEmailMap(range) {
+  const values = range.getValues();
+  const map = {};
+  values.forEach(row => {
+    if (row[0] && row[1]) {
+      map[row[0].trim().toLowerCase()] = row[1]; // Map Name/Nickname (Column G) to Email (Column H), case-insensitive
+    }
+  });
+  
+  Logger.log('Name-Email Map: ' + JSON.stringify(map)); // Log the map
+  return map;
+}
+
+function validateEmail(email) {
+  // Regular expression to validate email
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailPattern.test(email);
+}
