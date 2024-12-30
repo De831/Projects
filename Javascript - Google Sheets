@@ -5,6 +5,9 @@ function onEdit(e) {
   const notificationColumn = 2; // Column B for Person (name or nickname).
   const nameEmailRange = sheet.getRange("G2:H"); // Adjust range to where names/nicknames and emails are listed.
 
+  // Log the event object to debug if the edit is being triggered
+  Logger.log("Event Object: " + JSON.stringify(e));
+
   // Only proceed if the edit is in any of the relevant columns (A, B, C, D)
   if ([1, 2, 3, 4].includes(editedColumn)) {
     const row = editedRange.getRow();
@@ -13,6 +16,7 @@ function onEdit(e) {
     const description = sheet.getRange(row, 3).getValue(); // Data in Description (Column C)
     const dueDate = sheet.getRange(row, 4).getValue(); // Data in Due Date (Column D)
     const notes = sheet.getRange(row, 5).getValue(); // Data in Notes (Column E)
+    const moreNotes = sheet.getRange(row, 6).getValue(); // Data in More Notes (Column F)
 
     // Log values for debugging
     Logger.log('Person: ' + person);
@@ -20,6 +24,7 @@ function onEdit(e) {
     Logger.log('Description: ' + description);
     Logger.log('Due Date: ' + dueDate);
     Logger.log('Notes: ' + notes);
+    Logger.log('More Notes: ' + moreNotes);
 
     // Check if the Person, Category, Description, and Due Date columns are filled
     if (person && category && description && dueDate) {
@@ -35,7 +40,8 @@ function onEdit(e) {
         Logger.log('Sending to (all): ' + email.join(', '));
       } else {
         const nameEmailMap = createNameEmailMap(nameEmailRange);
-        email = nameEmailMap[person];
+        Logger.log('Name-Email Map: ' + JSON.stringify(nameEmailMap)); // Log the entire map
+        email = nameEmailMap[person.toLowerCase()]; // Ensure case-insensitive lookup
         Logger.log('Sending to (specific): ' + email);
       }
 
@@ -54,6 +60,7 @@ Details:
 - Description: ${description}
 - Due Date: ${dueDate}
 - Notes: ${notes}
+- More Notes: ${moreNotes}
 
 You can access the spreadsheet here: ${spreadsheetUrl}#gid=${sheet.getSheetId()}
 
@@ -86,10 +93,4 @@ function createNameEmailMap(range) {
   
   Logger.log('Name-Email Map: ' + JSON.stringify(map)); // Log the map
   return map;
-}
-
-function validateEmail(email) {
-  // Regular expression to validate email
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailPattern.test(email);
 }
