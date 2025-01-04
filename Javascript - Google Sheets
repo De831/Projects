@@ -67,8 +67,9 @@ You can access the spreadsheet here: ${spreadsheetUrl}#gid=${sheet.getSheetId()}
 Best regards,
 Google Sheets Notification`;
 
-        const subject = "Notification: You Have Been Assigned a Task";
-        
+        // Create a dynamic subject line combining all relevant column data
+        const subject = `Task Assigned: [Category: ${category}, Description: ${description}, Due: ${dueDate}]`;
+
         // Use the correct signature: GmailApp.sendEmail(recipient, subject, body)
         GmailApp.sendEmail(email, subject, message);
 
